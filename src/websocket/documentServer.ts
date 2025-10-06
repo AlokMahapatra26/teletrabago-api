@@ -37,12 +37,6 @@ const getYDoc = (docname: string, gc: boolean = true): WSSharedDoc => {
 
     awareness.on('update', ({ added, updated, removed }: any, conn: WebSocket | null) => {
       const changedClients = added.concat(updated, removed);
-      console.log(`👥 Awareness update for ${docname}:`, {
-        added: added.length,
-        updated: updated.length,
-        removed: removed.length,
-        totalConnections: sharedDoc.conns.size
-      });
 
       if (conn !== null) {
         const connControlledIDs = sharedDoc.conns.get(conn);
@@ -70,7 +64,6 @@ const getYDoc = (docname: string, gc: boolean = true): WSSharedDoc => {
     });
 
     sharedDoc.doc.on('update', (update: Uint8Array, origin: any) => {
-      console.log(`📝 Document update for ${docname}, broadcasting to ${sharedDoc.conns.size} clients`);
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, messageSync);
       syncProtocol.writeUpdate(encoder, update);
@@ -96,11 +89,13 @@ const closeConn = (doc: WSSharedDoc, conn: WebSocket) => {
       null
     );
   }
-  conn.close();
+  if (conn.readyState !== 3) { // CLOSED
+    conn.close();
+  }
 };
 
 const send = (doc: WSSharedDoc, conn: WebSocket, m: Uint8Array) => {
-  if (conn.readyState !== 1) {
+  if (conn.readyState !== 1) { // OPEN
     closeConn(doc, conn);
     return;
   }
@@ -147,8 +142,14 @@ const messageListener = (conn: WebSocket, doc: WSSharedDoc, message: Uint8Array)
 };
 
 export function setupDocumentWebSocket(server: Server) {
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({ 
+    noServer: true,
+    // Add these options for production
+    perMessageDeflate: false,
+    clientTracking: true,
+  });
 
+  // Handle upgrade with better error handling
   server.on('upgrade', (request, socket, head) => {
     const url = request.url || '';
     console.log(`🔄 Upgrade request for: ${url}`);
@@ -156,11 +157,13 @@ export function setupDocumentWebSocket(server: Server) {
     // Handle both /documents and /whiteboards paths
     if (url.startsWith('/documents') || url.startsWith('/whiteboards') || 
         url.includes('documents') || url.includes('whiteboards')) {
+      
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
       });
     } else {
-      console.log('❌ Invalid WebSocket path, destroying socket');
+      console.log('❌ Invalid WebSocket path');
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
       socket.destroy();
     }
   });
@@ -168,22 +171,29 @@ export function setupDocumentWebSocket(server: Server) {
   wss.on('connection', (conn: WebSocket, req: any) => {
     conn.binaryType = 'arraybuffer';
 
+    // Add ping/pong to keep connection alive
+    const pingInterval = setInterval(() => {
+      if (conn.readyState === 1) {
+        conn.ping();
+      }
+    }, 30000); // Ping every 30 seconds
+
+    conn.on('pong', () => {
+      // Connection is alive
+    });
+
     // Extract document/whiteboard name from URL
     const url = req.url || '';
     console.log(`📥 New WebSocket connection, URL: ${url}`);
     
     let docName = 'default';
     
-    // Parse URL to get room name
     if (url.includes('?')) {
-      // Format: /documents?room=doc-id or /whiteboards?room=doc-id
       const urlParams = new URLSearchParams(url.split('?')[1]);
       docName = urlParams.get('room') || 'default';
     } else {
-      // Format: /documents/doc-id or /whiteboards/doc-id
       const parts = url.split('/').filter(Boolean);
       if (parts.length >= 2) {
-        // Get the room type (documents/whiteboards) and ID
         docName = `${parts[0]}/${parts[1]}`;
       }
     }
@@ -204,7 +214,6 @@ export function setupDocumentWebSocket(server: Server) {
     // Send existing awareness states
     const awarenessStates = doc.awareness.getStates();
     if (awarenessStates.size > 0) {
-      console.log(`📤 Sending ${awarenessStates.size} awareness states to new client`);
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, messageAwareness);
       encoding.writeVarUint8Array(
@@ -222,11 +231,13 @@ export function setupDocumentWebSocket(server: Server) {
     });
 
     conn.on('close', () => {
+      clearInterval(pingInterval);
       closeConn(doc, conn);
     });
 
     conn.on('error', (error: Error) => {
       console.error('❌ WebSocket error:', error);
+      clearInterval(pingInterval);
       closeConn(doc, conn);
     });
   });
