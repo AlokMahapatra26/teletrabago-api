@@ -21,7 +21,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'https://teletrabago.vercel.app', 
-     process.env.RENDER_EXTERNAL_URL,
+     process.env.RENDER_EXTERNAL_URL || 'https://teletrabago.vercel.app',
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
