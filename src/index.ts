@@ -7,6 +7,7 @@ import taskRoutes from './routes/tasks';
 import companyRoutes from './routes/companies';
 import chatRoutes from './routes/chat'
 import documentRoutes from './routes/documents';
+import whiteboardRoutes from './routes/whiteboards'
 import { setupDocumentWebSocket } from './websocket/documentServer';
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/chat' , chatRoutes)
 app.use('/api/documents', documentRoutes);
+app.use('/api/whiteboards', whiteboardRoutes);
 
 // Create HTTP server
 const server = createServer(app);

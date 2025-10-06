@@ -153,11 +153,14 @@ export function setupDocumentWebSocket(server: Server) {
     const url = request.url || '';
     console.log(`🔄 Upgrade request for: ${url}`);
     
-    if (url.startsWith('/documents') || url.includes('documents')) {
+    // Handle both /documents and /whiteboards paths
+    if (url.startsWith('/documents') || url.startsWith('/whiteboards') || 
+        url.includes('documents') || url.includes('whiteboards')) {
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
       });
     } else {
+      console.log('❌ Invalid WebSocket path, destroying socket');
       socket.destroy();
     }
   });
@@ -165,26 +168,27 @@ export function setupDocumentWebSocket(server: Server) {
   wss.on('connection', (conn: WebSocket, req: any) => {
     conn.binaryType = 'arraybuffer';
 
-    // Extract document name from URL
+    // Extract document/whiteboard name from URL
     const url = req.url || '';
     console.log(`📥 New WebSocket connection, URL: ${url}`);
     
-    // Handle different URL formats
     let docName = 'default';
     
+    // Parse URL to get room name
     if (url.includes('?')) {
-      // Format: /documents?room=doc-id
+      // Format: /documents?room=doc-id or /whiteboards?room=doc-id
       const urlParams = new URLSearchParams(url.split('?')[1]);
       docName = urlParams.get('room') || 'default';
     } else {
-      // Format: /documents/doc-id
+      // Format: /documents/doc-id or /whiteboards/doc-id
       const parts = url.split('/').filter(Boolean);
       if (parts.length >= 2) {
-        docName = parts[1]; // Get the part after 'documents'
+        // Get the room type (documents/whiteboards) and ID
+        docName = `${parts[0]}/${parts[1]}`;
       }
     }
 
-    console.log(`✅ WebSocket connected to document: ${docName}`);
+    console.log(`✅ WebSocket connected to room: ${docName}`);
 
     const doc = getYDoc(docName, true);
     doc.conns.set(conn, new Set());
@@ -227,6 +231,6 @@ export function setupDocumentWebSocket(server: Server) {
     });
   });
 
-  console.log('✓ Document WebSocket server initialized on /documents');
+  console.log('✓ WebSocket server initialized for /documents and /whiteboards');
   return wss;
 }
