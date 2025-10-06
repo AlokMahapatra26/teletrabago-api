@@ -8,7 +8,9 @@ import companyRoutes from './routes/companies';
 import chatRoutes from './routes/chat'
 import documentRoutes from './routes/documents';
 import whiteboardRoutes from './routes/whiteboards'
+import meetingRoutes from './routes/meetings';
 import { setupDocumentWebSocket } from './websocket/documentServer';
+import { setupSignalingServer } from './websocket/signalingServer';
 
 dotenv.config();
 
@@ -29,6 +31,7 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/chat' , chatRoutes)
 app.use('/api/documents', documentRoutes);
 app.use('/api/whiteboards', whiteboardRoutes);
+app.use('/api/meetings' , meetingRoutes)
 
 // Create HTTP server
 const server = createServer(app);
@@ -36,7 +39,11 @@ const server = createServer(app);
 // Setup WebSocket for collaborative documents
 setupDocumentWebSocket(server);
 
+// Setup Socket.IO for video call signaling
+setupSignalingServer(server);
+
 server.listen(PORT, () => {
-  console.log(`✓ Server is running on port ${PORT}`);
-  console.log(`✓ WebSocket server ready at ws://localhost:${PORT}/documents`);
+  console.log(` Server is running on port ${PORT}`);
+  console.log(` WebSocket server ready for documents/whiteboards`);
+  console.log(` Socket.IO ready for video calls`);
 });
