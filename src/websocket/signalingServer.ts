@@ -13,7 +13,10 @@ const rooms = new Map<string, Map<string, UserInfo>>();
 export function setupSignalingServer(server: HttpServer) {
   const io = new Server(server, {
     cors: {
-      origin: process.env.FE_URL ? process.env.FE_URL : 'http://localhost:3000',
+      origin: [
+        'http://localhost:3000',
+      'https://teletrabago.vercel.app'
+      ],
       methods: ['GET', 'POST'],
       credentials: true,
     },
