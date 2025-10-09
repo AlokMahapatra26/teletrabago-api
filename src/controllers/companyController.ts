@@ -132,3 +132,42 @@ export const getUserRole = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const deleteCompany = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+
+    // Check if user is the owner of the company
+    const { data: membership, error: membershipError } = await supabase
+      .from('company_members')
+      .select('role')
+      .eq('company_id', id)
+      .eq('user_id', user_id)
+      .single();
+
+    if (membershipError || !membership) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    if (membership.role !== 'owner') {
+      return res.status(403).json({ error: 'Only company owners can delete the company' });
+    }
+
+    // Delete the company (cascade will handle related records)
+    const { error: deleteError } = await supabase
+      .from('companies')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      return res.status(400).json({ error: deleteError.message });
+    }
+
+    console.log(`Company ${id} deleted by user ${user_id}`);
+    return res.status(200).json({ message: 'Company deleted successfully' });
+  } catch (error) {
+    console.error('Delete company error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
