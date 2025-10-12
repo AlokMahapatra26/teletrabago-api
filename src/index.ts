@@ -31,7 +31,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.json({ message: 'API is running' });
+  res.json({ message: 'Server is OK' });
 });
 
 app.use('/api/auth', authRoutes);

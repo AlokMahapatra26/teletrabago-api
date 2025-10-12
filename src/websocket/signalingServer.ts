@@ -24,11 +24,11 @@ export function setupSignalingServer(server: HttpServer) {
   });
 
   io.on('connection', (socket: Socket) => {
-    console.log('🔌 New socket connection:', socket.id);
+    console.log(' New socket connection:', socket.id);
 
     // Join room
     socket.on('join-room', ({ roomName, userId, userName }) => {
-      console.log(`👤 ${userName} joining room: ${roomName}`);
+      console.log(`${userName} joining room: ${roomName}`);
 
       socket.join(roomName);
 
@@ -55,12 +55,12 @@ export function setupSignalingServer(server: HttpServer) {
         userName,
       });
 
-      console.log(`✅ Room ${roomName} now has ${room.size} users`);
+      console.log(`Room ${roomName} now has ${room.size} users`);
     });
 
     // WebRTC signaling: offer
     socket.on('offer', ({ offer, to }) => {
-      console.log(`📤 Sending offer from ${socket.id} to ${to}`);
+      console.log(`Sending offer from ${socket.id} to ${to}`);
       io.to(to).emit('offer', {
         offer,
         from: socket.id,
@@ -69,7 +69,7 @@ export function setupSignalingServer(server: HttpServer) {
 
     // WebRTC signaling: answer
     socket.on('answer', ({ answer, to }) => {
-      console.log(`📤 Sending answer from ${socket.id} to ${to}`);
+      console.log(`Sending answer from ${socket.id} to ${to}`);
       io.to(to).emit('answer', {
         answer,
         from: socket.id,
@@ -102,7 +102,7 @@ export function setupSignalingServer(server: HttpServer) {
 
     // Handle disconnect
     socket.on('disconnect', () => {
-      console.log('🔌 Socket disconnected:', socket.id);
+      console.log('Socket disconnected:', socket.id);
 
       // Find and remove user from all rooms
       rooms.forEach((room, roomName) => {
@@ -115,7 +115,7 @@ export function setupSignalingServer(server: HttpServer) {
             socketId: socket.id,
           });
 
-          console.log(`👋 ${user.userName} left room ${roomName}`);
+          console.log(`${user.userName} left room ${roomName}`);
 
           // Clean up empty rooms
           if (room.size === 0) {

@@ -9,9 +9,8 @@ export const signup = async (req: Request, res: Response) => {
       email,
       password,
       options: {
-        data: {
-          full_name,
-        },
+        data: { full_name },
+        emailRedirectTo: process.env.FRONTEND_URL + "/signin",
       },
     });
 
@@ -19,12 +18,14 @@ export const signup = async (req: Request, res: Response) => {
       return res.status(400).json({ error: error.message });
     }
 
-    return res.status(201).json({ 
-      user: data.user,
-      session: data.session 
+    // Don't return tokens until email confirmed
+    return res.status(201).json({
+      message: "Signup successful! Please check your email and confirm your account before logging in.",
     });
+
   } catch (error) {
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error("Signup error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -41,9 +42,9 @@ export const signin = async (req: Request, res: Response) => {
       return res.status(400).json({ error: error.message });
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       user: data.user,
-      session: data.session 
+      session: data.session
     });
   } catch (error) {
     return res.status(500).json({ error: 'Internal server error' });

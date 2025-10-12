@@ -81,7 +81,7 @@ const closeConn = (doc: WSSharedDoc, conn: WebSocket) => {
   if (doc.conns.has(conn)) {
     const controlledIds = doc.conns.get(conn);
     doc.conns.delete(conn);
-    console.log(`🔌 Connection closed for ${doc.name}, remaining: ${doc.conns.size}`);
+    console.log(`Connection closed for ${doc.name}, remaining: ${doc.conns.size}`);
     
     awarenessProtocol.removeAwarenessStates(
       doc.awareness,
@@ -152,7 +152,7 @@ export function setupDocumentWebSocket(server: Server) {
   // Handle upgrade with better error handling
   server.on('upgrade', (request, socket, head) => {
     const url = request.url || '';
-    console.log(`🔄 Upgrade request for: ${url}`);
+    console.log(` Upgrade request for: ${url}`);
     
     // Handle both /documents and /whiteboards paths
     if (url.startsWith('/documents') || url.startsWith('/whiteboards') || 
@@ -162,7 +162,7 @@ export function setupDocumentWebSocket(server: Server) {
         wss.emit('connection', ws, request);
       });
     } else {
-      console.log('❌ Invalid WebSocket path');
+      console.log(' Invalid WebSocket path');
       socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
       socket.destroy();
     }
@@ -184,7 +184,7 @@ export function setupDocumentWebSocket(server: Server) {
 
     // Extract document/whiteboard name from URL
     const url = req.url || '';
-    console.log(`📥 New WebSocket connection, URL: ${url}`);
+    console.log(`New WebSocket connection, URL: ${url}`);
     
     let docName = 'default';
     
@@ -198,12 +198,12 @@ export function setupDocumentWebSocket(server: Server) {
       }
     }
 
-    console.log(`✅ WebSocket connected to room: ${docName}`);
+    console.log(` WebSocket connected to room: ${docName}`);
 
     const doc = getYDoc(docName, true);
     doc.conns.set(conn, new Set());
 
-    console.log(`👥 Total connections for ${docName}: ${doc.conns.size}`);
+    console.log(`Total connections for ${docName}: ${doc.conns.size}`);
 
     // Send sync step 1
     const encoder = encoding.createEncoder();
@@ -236,12 +236,12 @@ export function setupDocumentWebSocket(server: Server) {
     });
 
     conn.on('error', (error: Error) => {
-      console.error('❌ WebSocket error:', error);
+      console.error('WebSocket error:', error);
       clearInterval(pingInterval);
       closeConn(doc, conn);
     });
   });
 
-  console.log('✓ WebSocket server initialized for /documents and /whiteboards');
+  console.log(' WebSocket server initialized for /documents and /whiteboards');
   return wss;
 }
