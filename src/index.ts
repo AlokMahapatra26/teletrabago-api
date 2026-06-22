@@ -20,8 +20,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://teletrabago.vercel.app', 
-     process.env.RENDER_EXTERNAL_URL || 'https://teletrabago.vercel.app',
+    'https://teletrabago.vercel.app',
+    'https://teletrabago.alokmahapatra.in',
+    process.env.RENDER_EXTERNAL_URL || 'https://teletrabago.vercel.app',
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -37,10 +38,10 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/companies', companyRoutes);
-app.use('/api/chat' , chatRoutes)
+app.use('/api/chat', chatRoutes)
 app.use('/api/documents', documentRoutes);
 app.use('/api/whiteboards', whiteboardRoutes);
-app.use('/api/meetings' , meetingRoutes)
+app.use('/api/meetings', meetingRoutes)
 
 // Create HTTP server
 const server = createServer(app);
